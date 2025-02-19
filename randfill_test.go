@@ -287,26 +287,26 @@ func TestFillCustom(t *testing.T) {
 	})
 }
 
-type selfFiller string
+const selfFillerTestPhrase = "was randfilled"
 
-// Implement randfill.Interface.
-func (sf *selfFiller) RandFill(c Continue) {
+type nativeSelfFiller string
+
+// Implement randfill.NativeSelfFiller.
+func (sf *nativeSelfFiller) RandFill(c Continue) {
 	*sf = selfFillerTestPhrase
 }
 
-const selfFillerTestPhrase = "was randfilled"
-
-func TestFillInterface(t *testing.T) {
+func TestNativeSelfFiller(t *testing.T) {
 	f := New()
 
-	var obj1 selfFiller
+	var obj1 nativeSelfFiller
 	tryFill(t, f, &obj1, func() Stages {
 		s := DeclareStages(1)
 		s.Stage(0, obj1 == selfFillerTestPhrase)
 		return s
 	})
 
-	var obj2 map[int]selfFiller
+	var obj2 map[int]nativeSelfFiller
 	tryFill(t, f, &obj2, func() Stages {
 		s := DeclareStages(1)
 		for _, v := range obj2 {
@@ -316,23 +316,76 @@ func TestFillInterface(t *testing.T) {
 	})
 }
 
-func TestFillInterfaceAndFunc(t *testing.T) {
+func TestNativeSelfFillerAndFunc(t *testing.T) {
 	const privateTestPhrase = "private phrase"
 	f := New().Funcs(
-		// This should take precedence over selfFiller.RandFill().
-		func(s *selfFiller, c Continue) {
+		// This should take precedence over nativeSelfFiller.RandFill().
+		func(s *nativeSelfFiller, c Continue) {
 			*s = privateTestPhrase
 		},
 	)
 
-	var obj1 selfFiller
+	var obj1 nativeSelfFiller
 	tryFill(t, f, &obj1, func() Stages {
 		s := DeclareStages(1)
 		s.Stage(0, obj1 == privateTestPhrase)
 		return s
 	})
 
-	var obj2 map[int]selfFiller
+	var obj2 map[int]nativeSelfFiller
+	tryFill(t, f, &obj2, func() Stages {
+		s := DeclareStages(1)
+		for _, v := range obj2 {
+			s.Stage(0, v == privateTestPhrase)
+		}
+		return s
+	})
+}
+
+type simpleSelfFiller string
+
+// Implement randfill.SimpleSelfFiller.
+func (sf *simpleSelfFiller) RandFill(r *rand.Rand) {
+	*sf = selfFillerTestPhrase
+}
+
+func TestSimpleSelfFiller(t *testing.T) {
+	f := New()
+
+	var obj1 simpleSelfFiller
+	tryFill(t, f, &obj1, func() Stages {
+		s := DeclareStages(1)
+		s.Stage(0, obj1 == selfFillerTestPhrase)
+		return s
+	})
+
+	var obj2 map[int]simpleSelfFiller
+	tryFill(t, f, &obj2, func() Stages {
+		s := DeclareStages(1)
+		for _, v := range obj2 {
+			s.Stage(0, v == selfFillerTestPhrase)
+		}
+		return s
+	})
+}
+
+func TestSimpleSelfFillerAndFunc(t *testing.T) {
+	const privateTestPhrase = "private phrase"
+	f := New().Funcs(
+		// This should take precedence over simpleSelfFiller.RandFill().
+		func(s *simpleSelfFiller, c Continue) {
+			*s = privateTestPhrase
+		},
+	)
+
+	var obj1 simpleSelfFiller
+	tryFill(t, f, &obj1, func() Stages {
+		s := DeclareStages(1)
+		s.Stage(0, obj1 == privateTestPhrase)
+		return s
+	})
+
+	var obj2 map[int]simpleSelfFiller
 	tryFill(t, f, &obj2, func() Stages {
 		s := DeclareStages(1)
 		for _, v := range obj2 {

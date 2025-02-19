@@ -89,10 +89,10 @@ func NewWithSeed(seed int64) *Filler {
 // as its deterministic output will no longer be available.
 //
 // Example: use go-fuzz to test the function `MyFunc(int)` in the package
-// `mypackage`. Add the file: "mypacakge_fuzz.go" with the content:
+// `mypackage`. Add the file: "mypackage_fuzz.go" with the content:
 //
 // // +build gofuzz
-// package mypacakge
+// package mypackage
 // import "sigs.k8s.io/randfill"
 //
 //	func Fuzz(data []byte) int {
@@ -142,7 +142,7 @@ func (f *Filler) Funcs(customFuncs ...interface{}) *Filler {
 			panic("Filler.Funcs: customFuncs' first argument must be a pointer or map type")
 		}
 		if t.In(1) != reflect.TypeOf(Continue{}) {
-			panic("Filler.Funcs: customFuncs' second argument must be a fuzz.Continue")
+			panic("Filler.Funcs: customFuncs' second argument must be a randfill.Continue")
 		}
 		f.customFuncs[argT] = v
 	}
@@ -213,13 +213,32 @@ func (f *Filler) SkipFieldsWithPattern(pattern *regexp.Regexp) *Filler {
 	return f
 }
 
+// SimpleSelfFiller represents an object that knows how to randfill itself.
+//
+// Unlike NativeSelfFiller, this interface does not cause the type in question
+// to depend on the randfill package.  This is most useful for simple types.  For
+// more complex types, consider using NativeSelfFiller.
+type SimpleSelfFiller interface {
+	// RandFill fills the current object with random data.
+	RandFill(r *rand.Rand)
+}
+
+// NativeSelfFiller represents an object that knows how to randfill itself.
+//
+// Unlike SimpleSelfFiller, this interface allows for recursive filling of
+// child objects with the same rules as the parent Filler.
+type NativeSelfFiller interface {
+	// RandFill fills the current object with random data.
+	RandFill(c Continue)
+}
+
 // Fill recursively fills all of obj's fields with something random.  First
 // this tries to find a custom fill function (see Funcs).  If there is no
-// custom function, this tests whether the object implements Interface and if
-// so, calls RandFill on it to fill itself.  If that fails, this will see if
-// there is a default fill function provided by this package. If all of that
-// fails, this will generate random values for all primitive fields and then
-// recurse for all non-primitives.
+// custom function, this tests whether the object implements SimpleSelfFiller
+// or NativeSelfFiller and if so, calls RandFill on it to fill itself.  If that
+// fails, this will see if there is a default fill function provided by this
+// package. If all of that fails, this will generate random values for all
+// primitive fields and then recurse for all non-primitives.
 //
 // This is safe for cyclic or tree-like structs, up to a limit.  Use the
 // MaxDepth method to adjust how deep you need it to recurse.
@@ -244,9 +263,9 @@ func (f *Filler) Fill(obj interface{}) {
 }
 
 // FillNoCustom is just like Fill, except that any custom fill function for
-// obj's type will not be called and obj will not be tested for Interface. This
-// applies only to obj and not other instances of obj's type or to obj's child
-// fields.
+// obj's type will not be called and obj will not be tested for
+// SimpleSelfFiller or NativeSelfFiller. This applies only to obj and not other
+// instances of obj's type or to obj's child fields.
 //
 // obj must be a pointer. Exported (public) fields can always be set, and if
 // the AllowUnexportedFields() modifier was called it can try to set unexported
@@ -388,7 +407,11 @@ func (fc *fillerContext) tryCustom(v reflect.Value) bool {
 		// Second: see if it can fill itself.
 		if v.CanInterface() {
 			intf := v.Interface()
-			if fillable, ok := intf.(Interface); ok {
+			if fillable, ok := intf.(SimpleSelfFiller); ok {
+				fillable.RandFill(fc.filler.r)
+				return true
+			}
+			if fillable, ok := intf.(NativeSelfFiller); ok {
 				fillable.RandFill(Continue{fc: fc, Rand: fc.filler.r})
 				return true
 			}
@@ -429,11 +452,6 @@ func (fc *fillerContext) tryCustom(v reflect.Value) bool {
 	return true
 }
 
-// Interface represents an object that knows how to randfill itself.
-type Interface interface {
-	RandFill(c Continue)
-}
-
 // Continue can be passed to custom fill functions to allow them to use
 // the correct source of randomness and to continue filling their members.
 type Continue struct {
@@ -446,7 +464,7 @@ type Continue struct {
 }
 
 // Fill continues filling obj. obj must be a pointer or a reflect.Value of a
-// pointer.
+// pointer.  See Filler.Fill.
 func (c Continue) Fill(obj interface{}) {
 	v, ok := obj.(reflect.Value)
 	if !ok {
@@ -461,8 +479,7 @@ func (c Continue) Fill(obj interface{}) {
 
 // FillNoCustom continues filling obj, except that any custom fill function for
 // obj's type will not be called and obj will not be tested for
-// randfill.Interface conformance.  This applies only to obj and not other
-// instances of obj's type.
+// SimpleSelfFiller or NativeSelfFiller.  See Filler.FillNoCustom.
 func (c Continue) FillNoCustom(obj interface{}) {
 	v, ok := obj.(reflect.Value)
 	if !ok {
