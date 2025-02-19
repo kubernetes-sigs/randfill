@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package fuzz_test
+package randfill_test
 
 import (
 	"encoding/json"
@@ -22,7 +22,7 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/google/gofuzz"
+	"sigs.k8s.io/randfill"
 )
 
 func ExampleSimple() {
@@ -35,7 +35,7 @@ func ExampleSimple() {
 		}
 	}
 
-	f := fuzz.New()
+	f := randfill.New()
 	object := MyType{}
 
 	uniqueObjects := map[MyType]int{}
@@ -56,8 +56,8 @@ func ExampleCustom() {
 	}
 
 	counter := 0
-	f := fuzz.New().Funcs(
-		func(i *int, c fuzz.Continue) {
+	f := randfill.New().Funcs(
+		func(i *int, c randfill.Continue) {
 			*i = counter
 			counter++
 		},
@@ -92,15 +92,15 @@ func ExampleComplex() {
 		PointerSlicePointer *[]*OtherType
 	}
 
-	f := fuzz.New().RandSource(rand.NewSource(0)).NilChance(0).NumElements(1, 1).Funcs(
-		func(o *OtherType, c fuzz.Continue) {
+	f := randfill.New().RandSource(rand.NewSource(0)).NilChance(0).NumElements(1, 1).Funcs(
+		func(o *OtherType, c randfill.Continue) {
 			o.A = "Foo"
 			o.B = "Bar"
 		},
-		func(op **OtherType, c fuzz.Continue) {
+		func(op **OtherType, c randfill.Continue) {
 			*op = &OtherType{"A", "B"}
 		},
-		func(m map[string]OtherType, c fuzz.Continue) {
+		func(m map[string]OtherType, c randfill.Continue) {
 			m["Works Because"] = OtherType{
 				"Fuzzer",
 				"Preallocated",
@@ -154,7 +154,7 @@ func ExampleComplex() {
 }
 
 func ExampleMap() {
-	f := fuzz.New().NilChance(0).NumElements(1, 1)
+	f := randfill.New().NilChance(0).NumElements(1, 1)
 	var myMap map[struct{ A, B, C int }]string
 	f.Fuzz(&myMap)
 	fmt.Printf("myMap has %v element(s).\n", len(myMap))
@@ -163,7 +163,7 @@ func ExampleMap() {
 }
 
 func ExampleSingle() {
-	f := fuzz.New()
+	f := randfill.New()
 	var i int
 	f.Fuzz(&i)
 
@@ -185,8 +185,8 @@ func ExampleEnum() {
 		BInfo *string
 	}
 
-	f := fuzz.New().NilChance(0).Funcs(
-		func(e *MyInfo, c fuzz.Continue) {
+	f := randfill.New().NilChance(0).Funcs(
+		func(e *MyInfo, c randfill.Continue) {
 			// Note c's embedded Rand allows for direct use.
 			// We could also use c.RandBool() here.
 			switch c.Intn(2) {
@@ -231,9 +231,9 @@ func ExampleCustomString() {
 
 	// example for generating custom string within one unicode range.
 	var A string
-	unicodeRange := fuzz.UnicodeRange{First: 'a', Last: 'z'}
+	unicodeRange := randfill.UnicodeRange{First: 'a', Last: 'z'}
 
-	f := fuzz.New().Funcs(unicodeRange.CustomStringFuzzFunc())
+	f := randfill.New().Funcs(unicodeRange.CustomStringFuzzFunc())
 	f.Fuzz(&A)
 
 	for i := range A {
@@ -245,11 +245,11 @@ func ExampleCustomString() {
 
 	// example for generating custom string within multiple unicode range.
 	var B string
-	unicodeRanges := fuzz.UnicodeRanges{
+	unicodeRanges := randfill.UnicodeRanges{
 		{First: 'a', Last: 'z'},
 		{First: '0', Last: '9'}, // You can also use 0x0030 as 0, 0x0039 as 9.
 	}
-	ff := fuzz.New().Funcs(unicodeRanges.CustomStringFuzzFunc())
+	ff := randfill.New().Funcs(unicodeRanges.CustomStringFuzzFunc())
 	ff.Fuzz(&B)
 
 	for i := range B {

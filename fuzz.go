@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package fuzz
+package randfill
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ import (
 
 	"strings"
 
-	"github.com/google/gofuzz/bytesource"
+	"sigs.k8s.io/randfill/bytesource"
 )
 
 // fuzzFuncMap is a map from a type to a fuzzFunc that handles that type.
@@ -71,7 +71,7 @@ func NewWithSeed(seed int64) *Fuzzer {
 	return f
 }
 
-// NewFromGoFuzz is a helper function that enables using gofuzz (this
+// NewFromGoFuzz is a helper function that enables using randfill (this
 // project) with go-fuzz (https://github.com/dvyukov/go-fuzz) for continuous
 // fuzzing. Essentially, it enables translating the fuzzing bytes from
 // go-fuzz to any Go object using this library.
@@ -88,11 +88,11 @@ func NewWithSeed(seed int64) *Fuzzer {
 //
 // // +build gofuzz
 // package mypacakge
-// import fuzz "github.com/google/gofuzz"
+// import "sigs.k8s.io/randfill"
 //
 //	func Fuzz(data []byte) int {
 //		var i int
-//		fuzz.NewFromGoFuzz(data).Fuzz(&i)
+//		randfill.NewFromGoFuzz(data).Fuzz(&i)
 //		MyFunc(i)
 //		return 0
 //	}
@@ -105,11 +105,11 @@ func NewFromGoFuzz(data []byte) *Fuzzer {
 // Each entry in fuzzFuncs must be a function taking two parameters.
 // The first parameter must be a pointer or map. It is the variable that
 // function will fill with random data. The second parameter must be a
-// fuzz.Continue, which will provide a source of randomness and a way
+// randfill.Continue, which will provide a source of randomness and a way
 // to automatically continue fuzzing smaller pieces of the first parameter.
 //
 // These functions are called sensibly, e.g., if you wanted custom string
-// fuzzing, the function `func(s *string, c fuzz.Continue)` would get
+// fuzzing, the function `func(s *string, c randfill.Continue)` would get
 // called and passed the address of strings. Maps and pointers will always
 // be made/new'd for you, ignoring the NilChance option. For slices, it
 // doesn't make much sense to  pre-create them--Fuzzer doesn't know how
@@ -134,7 +134,7 @@ func (f *Fuzzer) Funcs(fuzzFuncs ...interface{}) *Fuzzer {
 			panic("fuzzFunc must take pointer or map type")
 		}
 		if t.In(1) != reflect.TypeOf(Continue{}) {
-			panic("fuzzFunc's second parameter must be type fuzz.Continue")
+			panic("fuzzFunc's second parameter must be type randfill.Continue")
 		}
 		f.fuzzFuncs[argT] = v
 	}
@@ -207,11 +207,11 @@ func (f *Fuzzer) SkipFieldsWithPattern(pattern *regexp.Regexp) *Fuzzer {
 
 // Fuzz recursively fills all of obj's fields with something random.  First
 // this tries to find a custom fuzz function (see Funcs).  If there is no
-// custom function this tests whether the object implements fuzz.Interface and,
-// if so, calls Fuzz on it to fuzz itself.  If that fails, this will see if
-// there is a default fuzz function provided by this package.  If all of that
-// fails, this will generate random values for all primitive fields and then
-// recurse for all non-primitives.
+// custom function this tests whether the object implements randfill.Interface
+// and, if so, calls Fuzz on it to fuzz itself.  If that fails, this will see
+// if there is a default fuzz function provided by this package.  If all of
+// that fails, this will generate random values for all primitive fields and
+// then recurse for all non-primitives.
 //
 // This is safe for cyclic or tree-like structs, up to a limit.  Use the
 // MaxDepth method to adjust how deep you need it to recurse.
@@ -232,9 +232,9 @@ func (f *Fuzzer) Fuzz(obj interface{}) {
 }
 
 // FuzzNoCustom is just like Fuzz, except that any custom fuzz function for
-// obj's type will not be called and obj will not be tested for fuzz.Interface
-// conformance.  This applies only to obj and not other instances of obj's
-// type.
+// obj's type will not be called and obj will not be tested for
+// randfill.Interface conformance.  This applies only to obj and not other
+// instances of obj's type.
 // Not safe for cyclic or tree-like structs!
 // obj must be a pointer. Only exported (public) fields can be set (thanks, golang :/ )
 // Intended for tests, so will panic on bad input or unimplemented fields.
@@ -442,9 +442,9 @@ func (c Continue) Fuzz(obj interface{}) {
 }
 
 // FuzzNoCustom continues fuzzing obj, except that any custom fuzz function for
-// obj's type will not be called and obj will not be tested for fuzz.Interface
-// conformance.  This applies only to obj and not other instances of obj's
-// type.
+// obj's type will not be called and obj will not be tested for
+// randfill.Interface conformance.  This applies only to obj and not other
+// instances of obj's type.
 func (c Continue) FuzzNoCustom(obj interface{}) {
 	v, ok := obj.(reflect.Value)
 	if !ok {
