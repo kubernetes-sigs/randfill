@@ -24,14 +24,14 @@ You can use it on single variables:
 ```go
 f := randfill.New()
 var myInt int
-f.Fuzz(&myInt) // myInt gets a random value.
+f.Fill(&myInt) // myInt gets a random value.
 ```
 
 You can use it on maps:
 ```go
 f := randfill.New().NilChance(0).NumElements(1, 1)
 var myMap map[ComplexKeyType]string
-f.Fuzz(&myMap) // myMap will have exactly one element.
+f.Fill(&myMap) // myMap will have exactly one element.
 ```
 
 Customize the chance of getting a nil pointer:
@@ -40,7 +40,7 @@ f := randfill.New().NilChance(.5)
 var fancyStruct struct {
   A, B, C, D *string
 }
-f.Fuzz(&fancyStruct) // About half the pointers should be set.
+f.Fill(&fancyStruct) // About half the pointers should be set.
 ```
 
 You can even customize the randomization completely if needed:
@@ -61,16 +61,16 @@ f := randfill.New().NilChance(0).Funcs(
                 switch c.Intn(2) {
                 case 0:
                         e.Type = A
-                        c.Fuzz(&e.AInfo)
+                        c.Fill(&e.AInfo)
                 case 1:
                         e.Type = B
-                        c.Fuzz(&e.BInfo)
+                        c.Fill(&e.BInfo)
                 }
         },
 )
 
 var myObject MyInfo
-f.Fuzz(&myObject) // Type will correspond to whether A or B info is set.
+f.Fill(&myObject) // Type will correspond to whether A or B info is set.
 ```
 
 See more examples in ```example_test.go```.
@@ -89,7 +89,7 @@ import "sigs.k8s.io/randfill"
 
 func Fuzz(data []byte) int {
         var i int
-        randfill.NewFromGoFuzz(data).Fuzz(&i)
+        randfill.NewFromGoFuzz(data).Fill(&i)
         MyFunc(i)
         return 0
 }

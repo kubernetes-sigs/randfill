@@ -27,7 +27,7 @@ import (
 	"time"
 )
 
-func TestFuzz_basic(t *testing.T) {
+func TestFill_basic(t *testing.T) {
 	obj := struct {
 		I    int
 		I8   int8
@@ -47,7 +47,7 @@ func TestFuzz_basic(t *testing.T) {
 		C128 complex128
 	}{}
 
-	tryFuzz(t, New(), &obj, func() Stages {
+	tryFill(t, New(), &obj, func() Stages {
 		s := DeclareStages(16)
 		s.Stage(0, obj.I != 0)
 		s.Stage(1, obj.I8 != 0)
@@ -69,7 +69,7 @@ func TestFuzz_basic(t *testing.T) {
 	})
 }
 
-func TestFuzz_structptr(t *testing.T) {
+func TestFill_structptr(t *testing.T) {
 	obj := struct {
 		A *struct {
 			S string
@@ -77,7 +77,7 @@ func TestFuzz_structptr(t *testing.T) {
 	}{}
 
 	f := New().NilChance(.5)
-	tryFuzz(t, f, &obj, func() Stages {
+	tryFill(t, f, &obj, func() Stages {
 		s := DeclareStages(3)
 		s.Stage(0, obj.A == nil)
 		if s.Stage(1, obj.A != nil) {
@@ -87,14 +87,14 @@ func TestFuzz_structptr(t *testing.T) {
 	})
 }
 
-// tryFuzz tries filling until check returns passed == true, or up to 100
+// tryFill tries filling until check returns passed == true, or up to 100
 // times. Fail if check() never passes, report the highest stage it ever got
 // to.
-func tryFuzz(t *testing.T, f filler, obj interface{}, check func() Stages) {
+func tryFill(t *testing.T, f filler, obj interface{}, check func() Stages) {
 	t.Helper()
 	var s Stages
 	for i := 0; i < 100; i++ {
-		f.Fuzz(obj)
+		f.Fill(obj)
 		got := check()
 		s = s.OrPasses(got)
 		if s.AllPassed() {
@@ -174,10 +174,10 @@ func (s *Stages) Stage(n uint, pass bool) bool {
 }
 
 type filler interface {
-	Fuzz(obj interface{})
+	Fill(obj interface{})
 }
 
-func TestFuzz_structmap(t *testing.T) {
+func TestFill_structmap(t *testing.T) {
 	obj := &struct {
 		A map[struct {
 			S string
@@ -187,7 +187,7 @@ func TestFuzz_structmap(t *testing.T) {
 		B map[string]string
 	}{}
 
-	tryFuzz(t, New(), obj, func() Stages {
+	tryFill(t, New(), obj, func() Stages {
 		s := DeclareStages(8)
 		s.Stage(0, obj.A != nil)
 		s.Stage(1, len(obj.A) != 0)
@@ -206,7 +206,7 @@ func TestFuzz_structmap(t *testing.T) {
 	})
 }
 
-func TestFuzz_structslice(t *testing.T) {
+func TestFill_structslice(t *testing.T) {
 	obj := &struct {
 		A []struct {
 			S string
@@ -214,7 +214,7 @@ func TestFuzz_structslice(t *testing.T) {
 		B []string
 	}{}
 
-	tryFuzz(t, New(), obj, func() Stages {
+	tryFill(t, New(), obj, func() Stages {
 		s := DeclareStages(6)
 		s.Stage(0, obj.A != nil)
 		s.Stage(1, len(obj.A) != 0)
@@ -231,7 +231,7 @@ func TestFuzz_structslice(t *testing.T) {
 	})
 }
 
-func TestFuzz_structarray(t *testing.T) {
+func TestFill_structarray(t *testing.T) {
 	obj := &struct {
 		A [3]struct {
 			S string
@@ -239,7 +239,7 @@ func TestFuzz_structarray(t *testing.T) {
 		B [2]int
 	}{}
 
-	tryFuzz(t, New(), obj, func() Stages {
+	tryFill(t, New(), obj, func() Stages {
 		s := DeclareStages(2)
 		for _, v := range obj.A {
 			s.Stage(0, v.S != "")
@@ -252,7 +252,7 @@ func TestFuzz_structarray(t *testing.T) {
 	})
 }
 
-func TestFuzz_custom(t *testing.T) {
+func TestFill_custom(t *testing.T) {
 	obj := &struct {
 		A string
 		B *string
@@ -271,7 +271,7 @@ func TestFuzz_custom(t *testing.T) {
 		},
 	)
 
-	tryFuzz(t, f, obj, func() Stages {
+	tryFill(t, f, obj, func() Stages {
 		s := DeclareStages(6)
 		s.Stage(0, obj.A == testPhrase)
 		if s.Stage(1, obj.B != nil) {
@@ -288,24 +288,24 @@ func TestFuzz_custom(t *testing.T) {
 type selfFiller string
 
 // Implement randfill.Interface.
-func (sf *selfFiller) Fuzz(c Continue) {
+func (sf *selfFiller) RandFill(c Continue) {
 	*sf = selfFillerTestPhrase
 }
 
 const selfFillerTestPhrase = "was randfilled"
 
-func TestFuzz_interface(t *testing.T) {
+func TestFill_interface(t *testing.T) {
 	f := New()
 
 	var obj1 selfFiller
-	tryFuzz(t, f, &obj1, func() Stages {
+	tryFill(t, f, &obj1, func() Stages {
 		s := DeclareStages(1)
 		s.Stage(0, obj1 == selfFillerTestPhrase)
 		return s
 	})
 
 	var obj2 map[int]selfFiller
-	tryFuzz(t, f, &obj2, func() Stages {
+	tryFill(t, f, &obj2, func() Stages {
 		s := DeclareStages(1)
 		for _, v := range obj2 {
 			s.Stage(0, v == selfFillerTestPhrase)
@@ -314,24 +314,24 @@ func TestFuzz_interface(t *testing.T) {
 	})
 }
 
-func TestFuzz_interfaceAndFunc(t *testing.T) {
+func TestFill_interfaceAndFunc(t *testing.T) {
 	const privateTestPhrase = "private phrase"
 	f := New().Funcs(
-		// This should take precedence over selfFiller.Fuzz().
+		// This should take precedence over selfFiller.RandFill().
 		func(s *selfFiller, c Continue) {
 			*s = privateTestPhrase
 		},
 	)
 
 	var obj1 selfFiller
-	tryFuzz(t, f, &obj1, func() Stages {
+	tryFill(t, f, &obj1, func() Stages {
 		s := DeclareStages(1)
 		s.Stage(0, obj1 == privateTestPhrase)
 		return s
 	})
 
 	var obj2 map[int]selfFiller
-	tryFuzz(t, f, &obj2, func() Stages {
+	tryFill(t, f, &obj2, func() Stages {
 		s := DeclareStages(1)
 		for _, v := range obj2 {
 			s.Stage(0, v == privateTestPhrase)
@@ -340,7 +340,7 @@ func TestFuzz_interfaceAndFunc(t *testing.T) {
 	})
 }
 
-func TestFuzz_noCustom(t *testing.T) {
+func TestFill_noCustom(t *testing.T) {
 	type Inner struct {
 		Str string
 	}
@@ -353,7 +353,7 @@ func TestFuzz_noCustom(t *testing.T) {
 	f := New().Funcs(
 		func(outer *Outer, c Continue) {
 			outer.Str = testPhrase
-			c.Fuzz(&outer.In)
+			c.Fill(&outer.In)
 		},
 		func(inner *Inner, c Continue) {
 			inner.Str = testPhrase
@@ -361,9 +361,9 @@ func TestFuzz_noCustom(t *testing.T) {
 	)
 	c := Continue{fc: &fillerContext{filler: f}, Rand: f.r}
 
-	// Fuzzer.Fuzz()
+	// Filler.Fill()
 	obj1 := Outer{}
-	f.Fuzz(&obj1)
+	f.Fill(&obj1)
 	if obj1.Str != testPhrase {
 		t.Errorf("expected Outer custom function to have been called")
 	}
@@ -371,9 +371,9 @@ func TestFuzz_noCustom(t *testing.T) {
 		t.Errorf("expected Inner custom function to have been called")
 	}
 
-	// Continue.Fuzz()
+	// Continue.Fill()
 	obj2 := Outer{}
-	c.Fuzz(&obj2)
+	c.Fill(&obj2)
 	if obj2.Str != testPhrase {
 		t.Errorf("expected Outer custom function to have been called")
 	}
@@ -381,9 +381,9 @@ func TestFuzz_noCustom(t *testing.T) {
 		t.Errorf("expected Inner custom function to have been called")
 	}
 
-	// Fuzzer.FuzzNoCustom()
+	// Filler.FillNoCustom()
 	obj3 := Outer{}
-	f.FuzzNoCustom(&obj3)
+	f.FillNoCustom(&obj3)
 	if obj3.Str == testPhrase {
 		t.Errorf("expected Outer custom function to not have been called")
 	}
@@ -391,9 +391,9 @@ func TestFuzz_noCustom(t *testing.T) {
 		t.Errorf("expected Inner custom function to have been called")
 	}
 
-	// Continue.FuzzNoCustom()
+	// Continue.FillNoCustom()
 	obj4 := Outer{}
-	c.FuzzNoCustom(&obj4)
+	c.FillNoCustom(&obj4)
 	if obj4.Str == testPhrase {
 		t.Errorf("expected Outer custom function to not have been called")
 	}
@@ -402,7 +402,7 @@ func TestFuzz_noCustom(t *testing.T) {
 	}
 }
 
-func TestContinue_Fuzz_WithReflectValue(t *testing.T) {
+func TestContinue_Fill_WithReflectValue(t *testing.T) {
 	type obj struct {
 		Str string
 	}
@@ -413,20 +413,20 @@ func TestContinue_Fuzz_WithReflectValue(t *testing.T) {
 	o := obj{}
 	v := reflect.ValueOf(&o)
 
-	tryFuzz(t, c, v, func() Stages {
+	tryFill(t, c, v, func() Stages {
 		s := DeclareStages(1)
 		s.Stage(0, o.Str != "")
 		return s
 	})
 }
 
-func TestFuzz_NumElements(t *testing.T) {
+func TestFill_NumElements(t *testing.T) {
 	f := New().NilChance(0).NumElements(0, 1)
 	obj := &struct {
 		A []int
 	}{}
 
-	tryFuzz(t, f, obj, func() Stages {
+	tryFill(t, f, obj, func() Stages {
 		s := DeclareStages(3)
 		s.Stage(0, obj.A != nil)
 		s.Stage(1, len(obj.A) == 0)
@@ -439,7 +439,7 @@ func TestFuzz_NumElements(t *testing.T) {
 	})
 }
 
-func TestFuzz_Maxdepth(t *testing.T) {
+func TestFill_Maxdepth(t *testing.T) {
 	type S struct {
 		S *S
 	}
@@ -449,7 +449,7 @@ func TestFuzz_Maxdepth(t *testing.T) {
 	f.MaxDepth(1)
 	for i := 0; i < 100; i++ {
 		obj := S{}
-		f.Fuzz(&obj)
+		f.Fill(&obj)
 
 		if obj.S != nil {
 			t.Errorf("Expected nil")
@@ -459,7 +459,7 @@ func TestFuzz_Maxdepth(t *testing.T) {
 	f.MaxDepth(3) // field, ptr
 	for i := 0; i < 100; i++ {
 		obj := S{}
-		f.Fuzz(&obj)
+		f.Fill(&obj)
 
 		if obj.S == nil {
 			t.Errorf("Expected obj.S not nil")
@@ -471,7 +471,7 @@ func TestFuzz_Maxdepth(t *testing.T) {
 	f.MaxDepth(5) // field, ptr, field, ptr
 	for i := 0; i < 100; i++ {
 		obj := S{}
-		f.Fuzz(&obj)
+		f.Fill(&obj)
 
 		if obj.S == nil {
 			t.Errorf("Expected obj.S not nil")
@@ -483,7 +483,7 @@ func TestFuzz_Maxdepth(t *testing.T) {
 	}
 }
 
-func TestFuzzer_AllowUnexportedFields(t *testing.T) {
+func TestFiller_AllowUnexportedFields(t *testing.T) {
 	type S struct {
 		stringField string
 	}
@@ -491,27 +491,27 @@ func TestFuzzer_AllowUnexportedFields(t *testing.T) {
 	f := New().NilChance(0)
 
 	obj := S{}
-	f.Fuzz(&obj)
+	f.Fill(&obj)
 	if obj.stringField != "" {
 		t.Errorf("Expected obj.stringField to be empty")
 	}
 
 	f.AllowUnexportedFields(true)
 	obj = S{}
-	f.Fuzz(&obj)
+	f.Fill(&obj)
 	if obj.stringField == "" {
-		t.Errorf("Expected stringFiled not empty")
+		t.Errorf("Expected stringField not empty")
 	}
 
 	f.AllowUnexportedFields(false)
 	obj = S{}
-	f.Fuzz(&obj)
+	f.Fill(&obj)
 	if obj.stringField != "" {
 		t.Errorf("Expected obj.stringField to be empty")
 	}
 }
 
-func TestFuzz_SkipPattern(t *testing.T) {
+func TestFill_SkipPattern(t *testing.T) {
 	obj := &struct {
 		S1    string
 		S2    string
@@ -525,9 +525,9 @@ func TestFuzz_SkipPattern(t *testing.T) {
 	}{}
 
 	f := New().NilChance(0).SkipFieldsWithPattern(regexp.MustCompile(`^XXX_`))
-	f.Fuzz(obj)
+	f.Fill(obj)
 
-	tryFuzz(t, f, obj, func() Stages {
+	tryFill(t, f, obj, func() Stages {
 		s := DeclareStages(2)
 		s.Stage(0, obj.S_XXX != "")
 		s.Stage(1, obj.In.S2_XXX != "")
@@ -541,7 +541,7 @@ func TestFuzz_SkipPattern(t *testing.T) {
 	})
 }
 
-func TestFuzz_NilChanceZero(t *testing.T) {
+func TestFill_NilChanceZero(t *testing.T) {
 	// This data source for random will result in the following four values
 	// being sampled (the first, 0, being the most interesting case):
 	//   0; 0.8727288671879787; 0.5547307616625858; 0.021885026049502695
@@ -551,7 +551,7 @@ func TestFuzz_NilChanceZero(t *testing.T) {
 	var fancyStruct struct {
 		A, B, C, D *string
 	}
-	f.Fuzz(&fancyStruct) // None of the pointers should be nil, as NilChance is 0
+	f.Fill(&fancyStruct) // None of the pointers should be nil, as NilChance is 0
 
 	if fancyStruct.A == nil {
 		t.Error("First value in struct was nil")
@@ -613,13 +613,13 @@ func Test_charRange_choose(t *testing.T) {
 	})
 }
 
-func Test_UnicodeRange_CustomStringFuzzFunc(t *testing.T) {
+func Test_UnicodeRange_CustomStringFillFunc(t *testing.T) {
 	a2z := "abcdefghijklmnopqrstuvwxyz"
 
 	unicodeRange := UnicodeRange{'a', 'z'}
-	f := New().Funcs(unicodeRange.CustomStringFuzzFunc())
+	f := New().Funcs(unicodeRange.CustomStringFillFunc())
 	var myString string
-	f.Fuzz(&myString)
+	f.Fill(&myString)
 
 	t.Run("Picks a-z string", func(t *testing.T) {
 		for i := range myString {
@@ -636,16 +636,16 @@ func Test_UnicodeRange_Check(t *testing.T) {
 	unicodeRange.check()
 }
 
-func Test_UnicodeRanges_CustomStringFuzzFunc(t *testing.T) {
+func Test_UnicodeRanges_CustomStringFillFunc(t *testing.T) {
 	a2z0to9 := "abcdefghijklmnopqrstuvwxyz0123456789"
 
 	unicodeRanges := UnicodeRanges{
 		{'a', 'z'},
 		{'0', '9'},
 	}
-	f := New().Funcs(unicodeRanges.CustomStringFuzzFunc())
+	f := New().Funcs(unicodeRanges.CustomStringFillFunc())
 	var myString string
-	f.Fuzz(&myString)
+	f.Fill(&myString)
 
 	t.Run("Picks a-z0-9 string", func(t *testing.T) {
 		for i := range myString {
@@ -665,7 +665,7 @@ func Test_NoUnserializableTimes(t *testing.T) {
 	// billion. That is an extremely low false-negative rate but still, we try it
 	// a few times to be really sure it's not passing by accident.
 	for i := 0; i < 100; i++ {
-		f.Fuzz(&ti)
+		f.Fill(&ti)
 
 		// Attempt to serialize the string to binary
 		_, err := ti.MarshalBinary()
@@ -677,15 +677,15 @@ func Test_NoUnserializableTimes(t *testing.T) {
 	}
 }
 
-// TestFuzzThreadSafety lets the racedetector find races
-func TestFuzzThreadSafety(t *testing.T) {
+// TestFillThreadSafety lets the racedetector find races
+func TestFillThreadSafety(t *testing.T) {
 	f := New()
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	go func() { f.Fuzz(&[]string{}); wg.Done() }()
-	go func() { f.Fuzz(&[]string{}); wg.Done() }()
+	go func() { f.Fill(&[]string{}); wg.Done() }()
+	go func() { f.Fill(&[]string{}); wg.Done() }()
 	wg.Wait()
 }
 
@@ -695,10 +695,10 @@ func TestNewFromGoFuzz(t *testing.T) {
 	input := []byte{1, 2, 3}
 
 	var got int64
-	NewFromGoFuzz(input).Fuzz(&got)
+	NewFromGoFuzz(input).Fill(&got)
 
 	if want := int64(5563767293437588600); want != got {
-		t.Errorf("Fuzz(%q) = %d, want: %d", input, got, want)
+		t.Errorf("Fill(%q) = %d, want: %d", input, got, want)
 	}
 }
 

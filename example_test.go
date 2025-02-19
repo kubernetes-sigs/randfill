@@ -41,7 +41,7 @@ func ExampleSimple() {
 	uniqueObjects := map[MyType]int{}
 
 	for i := 0; i < 1000; i++ {
-		f.Fuzz(&object)
+		f.Fill(&object)
 		uniqueObjects[object]++
 	}
 	fmt.Printf("Got %v unique objects.\n", len(uniqueObjects))
@@ -67,7 +67,7 @@ func ExampleCustom() {
 	uniqueObjects := map[MyType]int{}
 
 	for i := 0; i < 100; i++ {
-		f.Fuzz(&object)
+		f.Fill(&object)
 		if object.A != i {
 			fmt.Printf("Unexpected value: %#v\n", object)
 		}
@@ -102,13 +102,13 @@ func ExampleComplex() {
 		},
 		func(m map[string]OtherType, c randfill.Continue) {
 			m["Works Because"] = OtherType{
-				"Fuzzer",
+				"Filler",
 				"Preallocated",
 			}
 		},
 	)
 	object := MyType{}
-	f.Fuzz(&object)
+	f.Fill(&object)
 	bytes, err := json.MarshalIndent(&object, "", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
@@ -122,13 +122,13 @@ func ExampleComplex() {
 	//     },
 	//     "Map": {
 	//         "Works Because": {
-	//             "A": "Fuzzer",
+	//             "A": "Filler",
 	//             "B": "Preallocated"
 	//         }
 	//     },
 	//     "PointerMap": {
 	//         "Works Because": {
-	//             "A": "Fuzzer",
+	//             "A": "Filler",
 	//             "B": "Preallocated"
 	//         }
 	//     },
@@ -156,7 +156,7 @@ func ExampleComplex() {
 func ExampleMap() {
 	f := randfill.New().NilChance(0).NumElements(1, 1)
 	var myMap map[struct{ A, B, C int }]string
-	f.Fuzz(&myMap)
+	f.Fill(&myMap)
 	fmt.Printf("myMap has %v element(s).\n", len(myMap))
 	// Output:
 	// myMap has 1 element(s).
@@ -165,7 +165,7 @@ func ExampleMap() {
 func ExampleSingle() {
 	f := randfill.New()
 	var i int
-	f.Fuzz(&i)
+	f.Fill(&i)
 
 	// Technically, we'd expect this to fail one out of 2 billion attempts...
 	fmt.Printf("(i == 0) == %v", i == 0)
@@ -192,17 +192,17 @@ func ExampleEnum() {
 			switch c.Intn(2) {
 			case 0:
 				e.Type = A
-				c.Fuzz(&e.AInfo)
+				c.Fill(&e.AInfo)
 			case 1:
 				e.Type = B
-				c.Fuzz(&e.BInfo)
+				c.Fill(&e.BInfo)
 			}
 		},
 	)
 
 	for i := 0; i < 100; i++ {
 		var myObject MyInfo
-		f.Fuzz(&myObject)
+		f.Fill(&myObject)
 		switch myObject.Type {
 		case A:
 			if myObject.AInfo == nil {
@@ -233,8 +233,8 @@ func ExampleCustomString() {
 	var A string
 	unicodeRange := randfill.UnicodeRange{First: 'a', Last: 'z'}
 
-	f := randfill.New().Funcs(unicodeRange.CustomStringFuzzFunc())
-	f.Fuzz(&A)
+	f := randfill.New().Funcs(unicodeRange.CustomStringFillFunc())
+	f.Fill(&A)
 
 	for i := range A {
 		if !strings.ContainsRune(a2z, rune(A[i])) {
@@ -249,8 +249,8 @@ func ExampleCustomString() {
 		{First: 'a', Last: 'z'},
 		{First: '0', Last: '9'}, // You can also use 0x0030 as 0, 0x0039 as 9.
 	}
-	ff := randfill.New().Funcs(unicodeRanges.CustomStringFuzzFunc())
-	ff.Fuzz(&B)
+	ff := randfill.New().Funcs(unicodeRanges.CustomStringFillFunc())
+	ff.Fill(&B)
 
 	for i := range B {
 		if !strings.ContainsRune(a2z0to9, rune(B[i])) {
