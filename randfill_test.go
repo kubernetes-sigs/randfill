@@ -672,7 +672,7 @@ func TestUnicodeRangeCustomStringFillFunc(t *testing.T) {
 	a2z := "abcdefghijklmnopqrstuvwxyz"
 
 	unicodeRange := UnicodeRange{'a', 'z'}
-	f := New().Funcs(unicodeRange.CustomStringFillFunc())
+	f := New().Funcs(unicodeRange.CustomStringFillFunc(0))
 	var myString string
 	f.Fill(&myString)
 
@@ -698,7 +698,7 @@ func TestUnicodeRangesCustomStringFillFunc(t *testing.T) {
 		{'a', 'z'},
 		{'0', '9'},
 	}
-	f := New().Funcs(unicodeRanges.CustomStringFillFunc())
+	f := New().Funcs(unicodeRanges.CustomStringFillFunc(0))
 	var myString string
 	f.Fill(&myString)
 
@@ -769,7 +769,7 @@ func BenchmarkRandString(b *testing.B) {
 	rs := rand.New(rand.NewSource(123))
 
 	for i := 0; i < b.N; i++ {
-		randString(rs)
+		randString(rs, 0)
 	}
 }
 
@@ -779,7 +779,7 @@ func BenchmarkUnicodeRangeRandString(b *testing.B) {
 	rs := rand.New(rand.NewSource(123))
 
 	for i := 0; i < b.N; i++ {
-		unicodeRange.randString(rs)
+		unicodeRange.randString(rs, 0)
 	}
 }
 
@@ -792,6 +792,6 @@ func BenchmarkUnicodeRangesRandString(b *testing.B) {
 	rs := rand.New(rand.NewSource(123))
 
 	for i := 0; i < b.N; i++ {
-		unicodeRanges.randString(rs)
+		unicodeRanges.randString(rs, 0)
 	}
 }

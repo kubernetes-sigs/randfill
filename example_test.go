@@ -233,7 +233,7 @@ func ExampleCustomString() {
 	var A string
 	unicodeRange := randfill.UnicodeRange{First: 'a', Last: 'z'}
 
-	f := randfill.New().Funcs(unicodeRange.CustomStringFillFunc())
+	f := randfill.New().Funcs(unicodeRange.CustomStringFillFunc(5))
 	f.Fill(&A)
 
 	for i := range A {
@@ -249,7 +249,7 @@ func ExampleCustomString() {
 		{First: 'a', Last: 'z'},
 		{First: '0', Last: '9'}, // You can also use 0x0030 as 0, 0x0039 as 9.
 	}
-	ff := randfill.New().Funcs(unicodeRanges.CustomStringFillFunc())
+	ff := randfill.New().Funcs(unicodeRanges.CustomStringFillFunc(5))
 	ff.Fill(&B)
 
 	for i := range B {

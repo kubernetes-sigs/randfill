@@ -492,20 +492,23 @@ func (c Continue) FillNoCustom(obj interface{}) {
 	c.fc.doFill(v, flagNoCustomFill)
 }
 
-// RandString makes a random string up to 20 characters long. The returned string
-// may include a variety of (valid) UTF-8 encodings.
-func (c Continue) RandString() string {
-	return randString(c.Rand)
+const defaultStringMaxLen = 20
+
+// String makes a random string up to n characters long. If n is 0, the default
+// size range is [0-20). The returned string may include a variety of (valid)
+// UTF-8 encodings.
+func (c Continue) String(n int) string {
+	return randString(c.Rand, n)
 }
 
-// RandUint64 makes random 64 bit numbers.
+// Uint64 makes random 64 bit numbers.
 // Weirdly, rand doesn't have a function that gives you 64 random bits.
-func (c Continue) RandUint64() uint64 {
+func (c Continue) Uint64() uint64 {
 	return randUint64(c.Rand)
 }
 
-// RandBool returns true or false randomly.
-func (c Continue) RandBool() bool {
+// Bool returns true or false randomly.
+func (c Continue) Bool() bool {
 	return randBool(c.Rand)
 }
 
@@ -556,7 +559,7 @@ var fillFuncMap = map[reflect.Kind]func(reflect.Value, *rand.Rand){
 		v.SetComplex(complex(r.Float64(), r.Float64()))
 	},
 	reflect.String: func(v reflect.Value, r *rand.Rand) {
-		v.SetString(randString(r))
+		v.SetString(randString(r, 0))
 	},
 	reflect.UnsafePointer: func(v reflect.Value, r *rand.Rand) {
 		panic("filling of UnsafePointers is not implemented")
@@ -593,10 +596,10 @@ func (ur UnicodeRange) choose(r int63nPicker) rune {
 // CustomStringFillFunc constructs a FillFunc which produces random strings.
 // Each character is selected from the range ur. If there are no characters
 // in the range (cr.Last < cr.First), this will panic.
-func (ur UnicodeRange) CustomStringFillFunc() func(s *string, c Continue) {
+func (ur UnicodeRange) CustomStringFillFunc(n int) func(s *string, c Continue) {
 	ur.check()
 	return func(s *string, c Continue) {
-		*s = ur.randString(c.Rand)
+		*s = ur.randString(c.Rand, n)
 	}
 }
 
@@ -610,8 +613,11 @@ func (ur UnicodeRange) check() {
 
 // randString of UnicodeRange makes a random string up to 20 characters long.
 // Each character is selected form ur(UnicodeRange).
-func (ur UnicodeRange) randString(r *rand.Rand) string {
-	n := r.Intn(20)
+func (ur UnicodeRange) randString(r *rand.Rand, max int) string {
+	if max == 0 {
+		max = defaultStringMaxLen
+	}
+	n := r.Intn(max)
 	sb := strings.Builder{}
 	sb.Grow(n)
 	for i := 0; i < n; i++ {
@@ -633,7 +639,7 @@ var defaultUnicodeRanges = UnicodeRanges{
 // Each range has an equal probability of being chosen. If there are no ranges,
 // or a selected range has no characters (.Last < .First), this will panic.
 // Do not modify any of the ranges in ur after calling this function.
-func (ur UnicodeRanges) CustomStringFillFunc() func(s *string, c Continue) {
+func (ur UnicodeRanges) CustomStringFillFunc(n int) func(s *string, c Continue) {
 	// Check unicode ranges slice is empty.
 	if len(ur) == 0 {
 		panic("UnicodeRanges is empty")
@@ -643,15 +649,18 @@ func (ur UnicodeRanges) CustomStringFillFunc() func(s *string, c Continue) {
 		ur[i].check()
 	}
 	return func(s *string, c Continue) {
-		*s = ur.randString(c.Rand)
+		*s = ur.randString(c.Rand, n)
 	}
 }
 
 // randString of UnicodeRanges makes a random string up to 20 characters long.
 // Each character is selected form one of the ranges of ur(UnicodeRanges),
 // and each range has an equal probability of being chosen.
-func (ur UnicodeRanges) randString(r *rand.Rand) string {
-	n := r.Intn(20)
+func (ur UnicodeRanges) randString(r *rand.Rand, max int) string {
+	if max == 0 {
+		max = defaultStringMaxLen
+	}
+	n := r.Intn(max)
 	sb := strings.Builder{}
 	sb.Grow(n)
 	for i := 0; i < n; i++ {
@@ -662,8 +671,8 @@ func (ur UnicodeRanges) randString(r *rand.Rand) string {
 
 // randString makes a random string up to 20 characters long. The returned string
 // may include a variety of (valid) UTF-8 encodings.
-func randString(r *rand.Rand) string {
-	return defaultUnicodeRanges.randString(r)
+func randString(r *rand.Rand, max int) string {
+	return defaultUnicodeRanges.randString(r, max)
 }
 
 // randUint64 makes random 64 bit numbers.
