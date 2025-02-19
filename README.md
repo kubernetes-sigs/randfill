@@ -3,6 +3,14 @@ randfill
 
 randfill is a library for populating go objects with random values.
 
+This is a fork of github.com/google/gofuzz, which was archived.
+
+NOTE: This repo is supported only for use within Kubernetes.  It is not our
+intention to support general use.  That said, if it works for you, that's
+great!  If you have a problem, please feel free to file an issue, but be aware
+that it may not be a priority for us to fix it unless it is affecting
+Kubernetes.  PRs are welcome, within reason.
+
 [![GoDoc](https://godoc.org/sigs.k8s.io/randfill?status.svg)](https://godoc.org/sigs.k8s.io/randfill)
 
 This is useful for testing:

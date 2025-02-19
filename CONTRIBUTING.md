@@ -1,67 +1,43 @@
-# How to contribute #
+# Contributing Guidelines
 
-We'd love to accept your patches and contributions to this project.  There are
-just a few small guidelines you need to follow.
+Welcome to Kubernetes. We are excited about the prospect of you joining our [community](https://git.k8s.io/community)! The Kubernetes community abides by the CNCF [code of conduct](code-of-conduct.md). Here is an excerpt:
 
+_As contributors and maintainers of this project, and in the interest of fostering an open and welcoming community, we pledge to respect all people who contribute through reporting issues, posting feature requests, updating documentation, submitting pull requests or patches, and other activities._
 
-## Contributor License Agreement ##
+## Getting Started
 
-Contributions to any Google project must be accompanied by a Contributor
-License Agreement.  This is not a copyright **assignment**, it simply gives
-Google permission to use and redistribute your contributions as part of the
-project.
+We have full documentation on how to get started contributing here:
 
-  * If you are an individual writing original source code and you're sure you
-    own the intellectual property, then you'll need to sign an [individual
-    CLA][].
+<!---
+If your repo has certain guidelines for contribution, put them here ahead of the general k8s resources
+-->
 
-  * If you work for a company that wants to allow you to contribute your work,
-    then you'll need to sign a [corporate CLA][].
+- [Contributor License Agreement](https://git.k8s.io/community/CLA.md) Kubernetes projects require that you sign a Contributor License Agreement (CLA) before we can accept your pull requests
+- [Kubernetes Contributor Guide](https://git.k8s.io/community/contributors/guide) - Main contributor documentation, or you can just jump directly to the [contributing section](https://git.k8s.io/community/contributors/guide#contributing)
+- [Contributor Cheat Sheet](https://git.k8s.io/community/contributors/guide/contributor-cheatsheet) - Common resources for existing developers
 
-You generally only need to submit a CLA once, so if you've already submitted
-one (even if it was for a different project), you probably don't need to do it
-again.
+## Mentorship
 
-[individual CLA]: https://developers.google.com/open-source/cla/individual
-[corporate CLA]: https://developers.google.com/open-source/cla/corporate
+- [Mentoring Initiatives](https://git.k8s.io/community/mentoring) - We have a diverse set of mentorship programs available that are always looking for volunteers!
 
+<!---
+Custom Information - if you're copying this template for the first time you can add custom content here, for example:
 
-## Submitting a patch ##
+## Contact Information
 
-  1. It's generally best to start by opening a new issue describing the bug or
-     feature you're intending to fix.  Even if you think it's relatively minor,
-     it's helpful to know what people are working on.  Mention in the initial
-     issue that you are planning to work on that bug or feature so that it can
-     be assigned to you.
+- [Slack channel](https://kubernetes.slack.com/messages/kubernetes-users) - Replace `kubernetes-users` with your slack channel string, this will send users directly to your channel. 
+- [Mailing list](URL)
 
-  1. Follow the normal process of [forking][] the project, and setup a new
-     branch to work in.  It's important that each group of changes be done in
-     separate branches in order to ensure that a pull request only includes the
-     commits related to that bug or feature.
+-->
 
-  1. Go makes it very simple to ensure properly formatted code, so always run
-     `go fmt` on your code before committing it.  You should also run
-     [golint][] over your code.  As noted in the [golint readme][], it's not
-     strictly necessary that your code be completely "lint-free", but this will
-     help you find common style issues.
+## Project Management
 
-  1. Any significant changes should almost always be accompanied by tests.  The
-     project already has good test coverage, so look at some of the existing
-     tests if you're unsure how to go about it.  [gocov][] and [gocov-html][]
-     are invaluable tools for seeing which parts of your code aren't being
-     exercised by your tests.
+The [maintainers](https://github.com/kubernetes-sigs/randfill/blob/main/OWNERS_ALIASES#L12) of this project (and often others who have official positions on the [contributor ladder](https://github.com/kubernetes-sigs/randfill/blob/main/OWNERS_ALIASES)) are responsible for performing project management which oversees development and maintenance of the API, tests, tools, e.t.c. While we try to be generally flexible when it comes to the management of individual pieces (such as Issues or PRs), we have some rules and guidelines which help us plan, coordinate and reduce waste. In this section you'll find some rules/guidelines for contributors related to project management which may extend or go beyond what you would find in the standard [Kubernetes Contributor Guide](https://git.k8s.io/community/contributors/guide).
 
-  1. Do your best to have [well-formed commit messages][] for each change.
-     This provides consistency throughout the project, and ensures that commit
-     messages are able to be formatted properly by various git tools.
+### Bumping stale and closed Issues & PRs
 
-  1. Finally, push the commits to your fork and submit a [pull request][].
+Maintainers are ultimately responsible for triaging new issues and PRs, accepting or declining them, deciding priority and fitting them into milestones intended for future releases. Bots are responsible for marking issues and PRs which stagnate as stale, or closing them if progress does not continue for a long period of time. Due to the nature of this community-driven development effort (we do not have dedicated engineering resources, we rely on the community which is effectively "volunteer time") **not all issues can be accepted, prioritized or completed**.
 
-[forking]: https://help.github.com/articles/fork-a-repo
-[golint]: https://github.com/golang/lint
-[golint readme]: https://github.com/golang/lint/blob/master/README
-[gocov]: https://github.com/axw/gocov
-[gocov-html]: https://github.com/matm/gocov-html
-[well-formed commit messages]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
-[squash]: http://git-scm.com/book/en/Git-Tools-Rewriting-History#Squashing-Commits
-[pull request]: https://help.github.com/articles/creating-a-pull-request
+You may find times when an issue you're subscribed to and interested in seems to stagnate, or perhaps gets auto-closed. Prior to bumping or directly re-opening issues yourself, we generally ask that you bring these up for discussion on the agenda for one of our community syncs if possible, or bring them up for discussion in Slack or the mailing list as this gives us a better opportunity to discuss the issue and determine viability and logistics. If feasible we **highly recommend being ready to contribute directly** to any stale or unprioritized effort that you want to see move forward, as **the best way to ensure progress is to engage with the community and personally invest time**.
+
+We (the community) aren't opposed to making exceptions in some cases, but when in doubt please follow the above guidelines before bumping closed or stale issues if you're not ready to personally invest time in them. We are responsible for managing these and without further context or engagement we may set these back to how they were previously organized.
