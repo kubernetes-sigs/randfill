@@ -126,20 +126,20 @@ func (f *Filler) Funcs(customFuncs ...interface{}) *Filler {
 	for i := range customFuncs {
 		v := reflect.ValueOf(customFuncs[i])
 		if v.Kind() != reflect.Func {
-			panic("Need only funcs!")
+			panic("Filler.Funcs: all arguments must be functions")
 		}
 		t := v.Type()
 		if t.NumIn() != 2 || t.NumOut() != 0 {
-			panic("Need 2 in and 0 out params!")
+			panic("Filler.Funcs: all customFuncs must have 2 arguments and 0 returns")
 		}
 		argT := t.In(0)
 		switch argT.Kind() {
 		case reflect.Ptr, reflect.Map:
 		default:
-			panic("func must take pointer or map type")
+			panic("Filler.Funcs: customFuncs' first argument must be a pointer or map type")
 		}
 		if t.In(1) != reflect.TypeOf(Continue{}) {
-			panic("func's second parameter must be type randfill.Continue")
+			panic("Filler.Funcs: customFuncs' second argument must be a fuzz.Continue")
 		}
 		f.customFuncs[argT] = v
 	}
@@ -157,7 +157,7 @@ func (f *Filler) RandSource(s rand.Source) *Filler {
 // 'p'. 'p' should be between 0 (no nils) and 1 (all nils), inclusive.
 func (f *Filler) NilChance(p float64) *Filler {
 	if p < 0 || p > 1 {
-		panic("p should be between 0 and 1, inclusive.")
+		panic("Filler.NilChance: p must be between 0 and 1, inclusive")
 	}
 	f.nilChance = p
 	return f
@@ -165,15 +165,15 @@ func (f *Filler) NilChance(p float64) *Filler {
 
 // NumElements sets the minimum and maximum number of elements that will be
 // added to a non-nil map or slice.
-func (f *Filler) NumElements(atLeast, atMost int) *Filler {
-	if atLeast > atMost {
-		panic("atLeast must be <= atMost")
+func (f *Filler) NumElements(min, max int) *Filler {
+	if min < 0 {
+		panic("Filler.NumElements: min must be >= 0")
 	}
-	if atLeast < 0 {
-		panic("atLeast must be >= 0")
+	if min > max {
+		panic("Filler.NumElements: min must be <= max")
 	}
-	f.minElements = atLeast
-	f.maxElements = atMost
+	f.minElements = min
+	f.maxElements = max
 	return f
 }
 
@@ -229,7 +229,7 @@ func (f *Filler) Fill(obj interface{}) {
 
 	v := reflect.ValueOf(obj)
 	if v.Kind() != reflect.Ptr {
-		panic("needed ptr!")
+		panic("Filler.Fill: obj must be a pointer")
 	}
 	v = v.Elem()
 	f.fillWithContext(v, 0)
@@ -248,7 +248,7 @@ func (f *Filler) FillNoCustom(obj interface{}) {
 
 	v := reflect.ValueOf(obj)
 	if v.Kind() != reflect.Ptr {
-		panic("needed ptr!")
+		panic("Filler.FillNoCustom: obj must be a pointer")
 	}
 	v = v.Elem()
 	f.fillWithContext(v, flagNoCustomFill)
@@ -362,7 +362,7 @@ func (fc *fillerContext) doFill(v reflect.Value, flags uint64) {
 	case reflect.Interface:
 		fallthrough
 	default:
-		panic(fmt.Sprintf("Can't handle type %v with value %#v", v.Type(), v.Interface()))
+		panic(fmt.Sprintf("can't fill type %v, kind %v", v.Type(), v.Kind()))
 	}
 }
 
@@ -437,7 +437,7 @@ func (c Continue) Fill(obj interface{}) {
 		v = reflect.ValueOf(obj)
 	}
 	if v.Kind() != reflect.Ptr {
-		panic("needed ptr!")
+		panic("Continue.Fill: obj must be a pointer")
 	}
 	v = v.Elem()
 	c.fc.doFill(v, 0)
@@ -453,7 +453,7 @@ func (c Continue) FillNoCustom(obj interface{}) {
 		v = reflect.ValueOf(obj)
 	}
 	if v.Kind() != reflect.Ptr {
-		panic("needed ptr!")
+		panic("Continue.FillNoCustom: obj must be a pointer")
 	}
 	v = v.Elem()
 	c.fc.doFill(v, flagNoCustomFill)
@@ -526,7 +526,7 @@ var fillFuncMap = map[reflect.Kind]func(reflect.Value, *rand.Rand){
 		v.SetString(randString(r))
 	},
 	reflect.UnsafePointer: func(v reflect.Value, r *rand.Rand) {
-		panic("unimplemented")
+		panic("filling of UnsafePointers is not implemented")
 	},
 }
 
@@ -571,7 +571,7 @@ func (ur UnicodeRange) CustomStringFillFunc() func(s *string, c Continue) {
 // is greater than the last one.
 func (ur UnicodeRange) check() {
 	if ur.Last < ur.First {
-		panic("The last encoding must be greater than the first one.")
+		panic("UnicodeRange.check: the last encoding must be greater than the first")
 	}
 }
 
@@ -603,7 +603,7 @@ var defaultUnicodeRanges = UnicodeRanges{
 func (ur UnicodeRanges) CustomStringFillFunc() func(s *string, c Continue) {
 	// Check unicode ranges slice is empty.
 	if len(ur) == 0 {
-		panic("UnicodeRanges is empty.")
+		panic("UnicodeRanges is empty")
 	}
 	// if not empty, each range should be checked.
 	for i := range ur {
