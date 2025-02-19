@@ -87,10 +87,10 @@ func TestFuzz_structptr(t *testing.T) {
 	})
 }
 
-// tryFuzz tries fuzzing until check returns passed == true, or up to 100
+// tryFuzz tries filling until check returns passed == true, or up to 100
 // times. Fail if check() never passes, report the highest stage it ever got
 // to.
-func tryFuzz(t *testing.T, f fuzzer, obj interface{}, check func() Stages) {
+func tryFuzz(t *testing.T, f filler, obj interface{}, check func() Stages) {
 	t.Helper()
 	var s Stages
 	for i := 0; i < 100; i++ {
@@ -173,7 +173,7 @@ func (s *Stages) Stage(n uint, pass bool) bool {
 	return pass
 }
 
-type fuzzer interface {
+type filler interface {
 	Fuzz(obj interface{})
 }
 
@@ -285,30 +285,30 @@ func TestFuzz_custom(t *testing.T) {
 	})
 }
 
-type SelfFuzzer string
+type selfFiller string
 
-// Implement fuzz.Interface.
-func (sf *SelfFuzzer) Fuzz(c Continue) {
-	*sf = selfFuzzerTestPhrase
+// Implement randfill.Interface.
+func (sf *selfFiller) Fuzz(c Continue) {
+	*sf = selfFillerTestPhrase
 }
 
-const selfFuzzerTestPhrase = "was fuzzed"
+const selfFillerTestPhrase = "was randfilled"
 
 func TestFuzz_interface(t *testing.T) {
 	f := New()
 
-	var obj1 SelfFuzzer
+	var obj1 selfFiller
 	tryFuzz(t, f, &obj1, func() Stages {
 		s := DeclareStages(1)
-		s.Stage(0, obj1 == selfFuzzerTestPhrase)
+		s.Stage(0, obj1 == selfFillerTestPhrase)
 		return s
 	})
 
-	var obj2 map[int]SelfFuzzer
+	var obj2 map[int]selfFiller
 	tryFuzz(t, f, &obj2, func() Stages {
 		s := DeclareStages(1)
 		for _, v := range obj2 {
-			s.Stage(0, v == selfFuzzerTestPhrase)
+			s.Stage(0, v == selfFillerTestPhrase)
 		}
 		return s
 	})
@@ -317,20 +317,20 @@ func TestFuzz_interface(t *testing.T) {
 func TestFuzz_interfaceAndFunc(t *testing.T) {
 	const privateTestPhrase = "private phrase"
 	f := New().Funcs(
-		// This should take precedence over SelfFuzzer.Fuzz().
-		func(s *SelfFuzzer, c Continue) {
+		// This should take precedence over selfFiller.Fuzz().
+		func(s *selfFiller, c Continue) {
 			*s = privateTestPhrase
 		},
 	)
 
-	var obj1 SelfFuzzer
+	var obj1 selfFiller
 	tryFuzz(t, f, &obj1, func() Stages {
 		s := DeclareStages(1)
 		s.Stage(0, obj1 == privateTestPhrase)
 		return s
 	})
 
-	var obj2 map[int]SelfFuzzer
+	var obj2 map[int]selfFiller
 	tryFuzz(t, f, &obj2, func() Stages {
 		s := DeclareStages(1)
 		for _, v := range obj2 {
@@ -359,7 +359,7 @@ func TestFuzz_noCustom(t *testing.T) {
 			inner.Str = testPhrase
 		},
 	)
-	c := Continue{fc: &fuzzerContext{fuzzer: f}, Rand: f.r}
+	c := Continue{fc: &fillerContext{filler: f}, Rand: f.r}
 
 	// Fuzzer.Fuzz()
 	obj1 := Outer{}
@@ -408,7 +408,7 @@ func TestContinue_Fuzz_WithReflectValue(t *testing.T) {
 	}
 
 	f := New()
-	c := Continue{fc: &fuzzerContext{fuzzer: f}, Rand: f.r}
+	c := Continue{fc: &fillerContext{filler: f}, Rand: f.r}
 
 	o := obj{}
 	v := reflect.ValueOf(&o)
@@ -672,7 +672,7 @@ func Test_NoUnserializableTimes(t *testing.T) {
 		if err != nil {
 			// Before the fix this fails consistently (at least in BST timezone) with:
 			//   Time.MarshalBinary: unexpected zone offset
-			t.Fatalf("failed to serialise fuzzed time: %s", err)
+			t.Fatalf("failed to serialise randfilled time: %s", err)
 		}
 	}
 }
