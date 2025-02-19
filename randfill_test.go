@@ -485,28 +485,28 @@ func TestFillMaxdepth(t *testing.T) {
 
 func TestFillerAllowUnexportedFields(t *testing.T) {
 	type S struct {
-		stringField string
+		stringField *string
 	}
 
 	f := New().NilChance(0)
 
 	obj := S{}
 	f.Fill(&obj)
-	if obj.stringField != "" {
-		t.Errorf("Expected obj.stringField to be empty")
+	if obj.stringField != nil {
+		t.Errorf("Expected obj.stringField to be nil")
 	}
 
 	f.AllowUnexportedFields(true)
 	obj = S{}
 	f.Fill(&obj)
-	if obj.stringField == "" {
-		t.Errorf("Expected stringField not empty")
+	if obj.stringField == nil {
+		t.Errorf("Expected stringField not nil")
 	}
 
 	f.AllowUnexportedFields(false)
 	obj = S{}
 	f.Fill(&obj)
-	if obj.stringField != "" {
+	if obj.stringField != nil {
 		t.Errorf("Expected obj.stringField to be empty")
 	}
 }
