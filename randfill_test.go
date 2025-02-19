@@ -27,7 +27,7 @@ import (
 	"time"
 )
 
-func TestFill_basic(t *testing.T) {
+func TestFillBasic(t *testing.T) {
 	obj := struct {
 		I    int
 		I8   int8
@@ -69,7 +69,7 @@ func TestFill_basic(t *testing.T) {
 	})
 }
 
-func TestFill_structptr(t *testing.T) {
+func TestFillStructPtr(t *testing.T) {
 	obj := struct {
 		A *struct {
 			S string
@@ -177,7 +177,7 @@ type filler interface {
 	Fill(obj interface{})
 }
 
-func TestFill_structmap(t *testing.T) {
+func TestFillStructMap(t *testing.T) {
 	obj := &struct {
 		A map[struct {
 			S string
@@ -206,7 +206,7 @@ func TestFill_structmap(t *testing.T) {
 	})
 }
 
-func TestFill_structslice(t *testing.T) {
+func TestFillStructSlice(t *testing.T) {
 	obj := &struct {
 		A []struct {
 			S string
@@ -231,7 +231,7 @@ func TestFill_structslice(t *testing.T) {
 	})
 }
 
-func TestFill_structarray(t *testing.T) {
+func TestFillStructArray(t *testing.T) {
 	obj := &struct {
 		A [3]struct {
 			S string
@@ -252,7 +252,7 @@ func TestFill_structarray(t *testing.T) {
 	})
 }
 
-func TestFill_custom(t *testing.T) {
+func TestFillCustom(t *testing.T) {
 	obj := &struct {
 		A string
 		B *string
@@ -294,7 +294,7 @@ func (sf *selfFiller) RandFill(c Continue) {
 
 const selfFillerTestPhrase = "was randfilled"
 
-func TestFill_interface(t *testing.T) {
+func TestFillInterface(t *testing.T) {
 	f := New()
 
 	var obj1 selfFiller
@@ -314,7 +314,7 @@ func TestFill_interface(t *testing.T) {
 	})
 }
 
-func TestFill_interfaceAndFunc(t *testing.T) {
+func TestFillInterfaceAndFunc(t *testing.T) {
 	const privateTestPhrase = "private phrase"
 	f := New().Funcs(
 		// This should take precedence over selfFiller.RandFill().
@@ -340,7 +340,7 @@ func TestFill_interfaceAndFunc(t *testing.T) {
 	})
 }
 
-func TestFill_noCustom(t *testing.T) {
+func TestFillNoCustom(t *testing.T) {
 	type Inner struct {
 		Str string
 	}
@@ -402,7 +402,7 @@ func TestFill_noCustom(t *testing.T) {
 	}
 }
 
-func TestContinue_Fill_WithReflectValue(t *testing.T) {
+func TestContinueFillWithReflectValue(t *testing.T) {
 	type obj struct {
 		Str string
 	}
@@ -420,7 +420,7 @@ func TestContinue_Fill_WithReflectValue(t *testing.T) {
 	})
 }
 
-func TestFill_NumElements(t *testing.T) {
+func TestFillNumElements(t *testing.T) {
 	f := New().NilChance(0).NumElements(0, 1)
 	obj := &struct {
 		A []int
@@ -439,7 +439,7 @@ func TestFill_NumElements(t *testing.T) {
 	})
 }
 
-func TestFill_Maxdepth(t *testing.T) {
+func TestFillMaxdepth(t *testing.T) {
 	type S struct {
 		S *S
 	}
@@ -483,7 +483,7 @@ func TestFill_Maxdepth(t *testing.T) {
 	}
 }
 
-func TestFiller_AllowUnexportedFields(t *testing.T) {
+func TestFillerAllowUnexportedFields(t *testing.T) {
 	type S struct {
 		stringField string
 	}
@@ -511,7 +511,7 @@ func TestFiller_AllowUnexportedFields(t *testing.T) {
 	}
 }
 
-func TestFill_SkipPattern(t *testing.T) {
+func TestFillSkipPattern(t *testing.T) {
 	obj := &struct {
 		S1    string
 		S2    string
@@ -541,7 +541,7 @@ func TestFill_SkipPattern(t *testing.T) {
 	})
 }
 
-func TestFill_NilChanceZero(t *testing.T) {
+func TestFillNilChanceZero(t *testing.T) {
 	// This data source for random will result in the following four values
 	// being sampled (the first, 0, being the most interesting case):
 	//   0; 0.8727288671879787; 0.5547307616625858; 0.021885026049502695
@@ -593,7 +593,7 @@ func (c customInt63) Int63n(n int64) int64 {
 	}
 }
 
-func Test_charRange_choose(t *testing.T) {
+func TestCharRangeChoose(t *testing.T) {
 	lowercaseLetters := UnicodeRange{'a', 'z'}
 
 	t.Run("Picks first", func(t *testing.T) {
@@ -613,7 +613,7 @@ func Test_charRange_choose(t *testing.T) {
 	})
 }
 
-func Test_UnicodeRange_CustomStringFillFunc(t *testing.T) {
+func TestUnicodeRangeCustomStringFillFunc(t *testing.T) {
 	a2z := "abcdefghijklmnopqrstuvwxyz"
 
 	unicodeRange := UnicodeRange{'a', 'z'}
@@ -630,13 +630,13 @@ func Test_UnicodeRange_CustomStringFillFunc(t *testing.T) {
 	})
 }
 
-func Test_UnicodeRange_Check(t *testing.T) {
+func TestUnicodeRangeCheck(t *testing.T) {
 	unicodeRange := UnicodeRange{'a', 'z'}
 
 	unicodeRange.check()
 }
 
-func Test_UnicodeRanges_CustomStringFillFunc(t *testing.T) {
+func TestUnicodeRangesCustomStringFillFunc(t *testing.T) {
 	a2z0to9 := "abcdefghijklmnopqrstuvwxyz0123456789"
 
 	unicodeRanges := UnicodeRanges{
@@ -656,7 +656,7 @@ func Test_UnicodeRanges_CustomStringFillFunc(t *testing.T) {
 	})
 }
 
-func Test_NoUnserializableTimes(t *testing.T) {
+func TestNoUnserializableTimes(t *testing.T) {
 	var ti time.Time
 	f := New()
 
