@@ -5,10 +5,7 @@ aliases:
   # Reference: https://github.com/kubernetes/org/blob/main/OWNERS_ALIASES
   sig-testing-leads:
     - BenTheElder
-    - alvaroaleman
     - aojea
-    - cjwagner
     - jbpratt
     - michelle192837
     - pohly
-    - xmcqueen
